@@ -68,6 +68,7 @@ const DAY: Record<string, string> = {
   'k-z': 'fill:#5a6bb8',
   'k-ic-running': 'fill:#dcebf8;stroke:#7f95c9',
   'k-ic-home': 'fill:#fbe9e2',
+  'k-ic-landed': 'fill:#e3ecf7;stroke:#7f95c9',
   'k-ic-lost': 'fill:#e6ebf0;stroke:#8a9aab',
   'k-rib0': 'stop-color:#e9f5fc',
   'k-rib1w': 'stop-color:#fdeede',

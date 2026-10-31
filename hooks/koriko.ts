@@ -1,5 +1,5 @@
 import type { Sprite, SpriteStatus } from '../types'
-import { delivered, gull, HALO, kiki, jiji, loaf, rainCloud } from './characters'
+import { delivered, gull, HALO, kiki, jiji, landed, loaf, rainCloud } from './characters'
 import { CREAM, EASE_OUT, FONT, KIKI_RED, LAMP, MUTED, ROOFS, esc, hash, lookStyle, scatter } from './palette'
 import type { Look } from './palette'
 import { bakery, clockTower, house, moon, nightSky, sea, stars } from './scenery'
@@ -115,6 +115,7 @@ export function headerSvg(w: number, list: Sprite[], look: Look = 'dark') {
   const running = list.filter(s => s.status === 'running')
   const done = list.filter(s => s.status === 'home').length
   const lost = list.filter(s => s.status === 'lost').length
+  const early = list.filter(s => s.status === 'landed').length
   const seaTop = h - 14
   const towerX = Math.min(w - 40, w * 0.8)
   let town = ''
@@ -136,8 +137,8 @@ export function headerSvg(w: number, list: Sprite[], look: Look = 'dark') {
     list.length === 0
       ? 'No deliveries yet. Jiji is napping.'
       : running.length === 0
-        ? `Every parcel delivered · ${done}${lost ? ` · ${lost} rained out` : ''}`
-        : `${running.length} in flight · ${done} delivered${lost ? ` · ${lost} rained out` : ''}`
+        ? `Every parcel delivered · ${done}${early ? ` · ${early} landed early` : ''}${lost ? ` · ${lost} rained out` : ''}`
+        : `${running.length} in flight · ${done} delivered${early ? ` · ${early} landed early` : ''}${lost ? ` · ${lost} rained out` : ''}`
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${lookStyle(look)}
     <defs>${nightSky('hsky')}${HALO}<clipPath id="hcard"><rect width="${w}" height="${h}" rx="12"/></clipPath></defs>
     <g clip-path="url(#hcard)">
@@ -159,7 +160,8 @@ export function headerSvg(w: number, list: Sprite[], look: Look = 'dark') {
 /**
  * One row's picture. A delivery that has just finished plays its arrival before it
  * settles: Kiki (or the loaf) flies off to the right, the parcel drops in with a
- * bounce and the stamp pops; a failed one sinks as a rain cloud rolls in.
+ * bounce and the stamp pops; one called off lands with the broom set down beside it; a failed one sinks as a
+ * rain cloud rolls in.
  */
 export function iconSvg(s: Sprite, at: number, look: Look = 'dark') {
   const size = 44
@@ -170,7 +172,11 @@ export function iconSvg(s: Sprite, at: number, look: Look = 'dark') {
   if (s.status === 'running') {
     body = flying
   } else if (!isFresh) {
-    body = s.status === 'home' ? `<g transform="translate(0 1)">${delivered(1.5)}</g>` : rainCloud(1.4)
+    body = s.status === 'home' ? `<g transform="translate(0 1)">${delivered(1.5)}</g>` : s.status === 'landed' ? landed(1.4) : rainCloud(1.4)
+  } else if (s.status === 'landed') {
+    body = `<g><animateTransform attributeName="transform" type="translate" values="0 0;0 10" dur="0.9s" calcMode="spline" keySplines="${EASE_OUT}" keyTimes="0;1" fill="freeze"/>
+        <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.7;1" dur="0.9s" fill="freeze"/>${flying}</g>
+      <g opacity="0"><animate attributeName="opacity" values="0;1" dur="0.4s" begin="0.6s" fill="freeze"/>${landed(1.4, true)}</g>`
   } else if (s.status === 'home') {
     body = `<g><animateTransform attributeName="transform" type="translate" values="0 0;30 -22" dur="0.9s" calcMode="spline" keySplines="0.5 0 0.8 0.6" keyTimes="0;1" fill="freeze"/>
         <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.6;1" dur="0.9s" fill="freeze"/>${flying}</g>
@@ -183,8 +189,8 @@ export function iconSvg(s: Sprite, at: number, look: Look = 'dark') {
       <g opacity="0"><animate attributeName="opacity" values="0;1" dur="0.6s" begin="0.5s" fill="freeze"/>
         <animateTransform attributeName="transform" type="translate" values="-30 0;0 0" dur="0.9s" begin="0.5s" calcMode="spline" keySplines="${EASE_OUT}" keyTimes="0;1" fill="freeze"/>${rainCloud(1.4)}</g>`
   }
-  const bg = s.status === 'running' ? '#283052' : s.status === 'home' ? '#3a3046' : '#2b3340'
-  const ring = s.status === 'running' ? '#5d6aa8' : s.status === 'home' ? KIKI_RED : '#4b5a6b'
+  const bg = s.status === 'running' ? '#283052' : s.status === 'home' ? '#3a3046' : s.status === 'landed' ? '#26304a' : '#2b3340'
+  const ring = s.status === 'running' ? '#5d6aa8' : s.status === 'home' ? KIKI_RED : s.status === 'landed' ? '#7f95c9' : '#4b5a6b'
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${-size / 2} ${-size / 2} ${size} ${size}">${lookStyle(look)}
     <defs>${HALO}<clipPath id="ic"><circle r="${size / 2 - 1}"/></clipPath></defs>
     <circle r="${size / 2 - 1}" fill="${bg}" stroke="${ring}" stroke-width="1" class="k-ic-${s.status}"/>
@@ -203,4 +209,5 @@ export const bowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height
 </svg>`
 
 export const whatIs = (s: Sprite) => (s.kind === 'shell' ? 'bakery chore' : s.type || 'delivery')
-export const statusWord = (st: SpriteStatus) => (st === 'running' ? 'in flight' : st === 'home' ? 'delivered' : 'rained out')
+export const statusWord = (st: SpriteStatus) =>
+  st === 'running' ? 'in flight' : st === 'home' ? 'delivered' : st === 'landed' ? 'landed early' : 'rained out'

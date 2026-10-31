@@ -11,8 +11,8 @@ By day, when the app is in light mode:
 ## What you get
 
 **Sky ribbon** (always above the prompt)
-- **Usage left:** the 5-hour limit is a strip of golden bakery bread, and the 7-day limit is a strip of sea blue. What's left of the strip is what you have left. A clock-style reset time (`2:02`, `3d 5:00`) sits beside it. A strip turns rose red under 15%.
-- **Prompt cache:** Jiji the cat. While the cache is warm he sits up, blinking and swishing his tail, next to the time until it cools. Once it goes cold he curls up asleep, next to how long it has been and what the next message will cost to re-cache.
+- **Usage left:** the 5-hour session limit is a traffic light: green with half or more left, yellow down to 20%, rose red below that. The 7-day limit is a strip of sea blue that turns rose red under 15%. What's left of the strip is what you have left. A clock-style reset time (`2:02`, `3d 5:00`) sits beside it.
+- **Prompt cache:** Jiji the cat. While the cache is warm he sits up, blinking and swishing his tail, next to the time until it cools. Now and then he licks a paw. If a strip drops under 20% he walks over on four legs and points at it, three times. Every 10 to 15 minutes Lily, the white cat next door, trots in to play with him for a bit. Once it goes cold he curls up asleep, next to how long it has been and what the next message will cost to re-cache.
 
 **Deliveries band** (while subagents or background tasks run)
 - Kiki sets out from the bakery. Each delivery is a house, and a red pin bobs over the one she's heading for.
@@ -21,7 +21,7 @@ By day, when the app is in light mode:
 
 **Delivery board** (`/meadow`, or the 📦 button)
 - A row for each task: Kiki on her broom for a subagent, a loaf of bread rising for a background shell command.
-- When a task lands, Kiki flies off and the parcel drops in with a bounce and a green stamp. A failed or stopped task sinks as a rain cloud rolls in.
+- When a task lands, Kiki flies off and the parcel drops in with a bounce and a green stamp. A task you stopped lands early: Kiki's broom set down by the parcel with a moon-blue stamp. A failed one sinks as a rain cloud rolls in.
 
 **Small touches**
 - Your messages become letters for delivery: a navy card with Kiki's red bow.

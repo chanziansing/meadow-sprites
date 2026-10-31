@@ -211,7 +211,7 @@ export const register: Register = on => {
   on('tool.call', { tool: 'TaskStop' }, async ($, e, next) => {
     const ran = await next(e)
     const id = String((e as { task_id?: string; shell_id?: string }).task_id ?? (e as { shell_id?: string }).shell_id ?? '')
-    if (id) await settle($, s => s.taskId === id, 'lost')
+    if (id) await settle($, s => s.taskId === id, 'landed')
     return ran
   })
 
@@ -224,7 +224,10 @@ export const register: Register = on => {
     if (e.origin.kind === 'task-notification') {
       const id = /<task-id>([^<]+)<\/task-id>/.exec(e.text)?.[1]?.trim()
       const status = /<status>([^<]+)<\/status>/.exec(e.text)?.[1]?.trim()
-      if (id) await settle($, s => s.taskId === id, status === 'completed' ? 'home' : 'lost')
+      // Stopped on purpose (killed, or ended by a signal: exit code 128 and up) lands early; anything else failed.
+      const code = Number(/exit code (\d+)/.exec(e.text)?.[1] ?? 0)
+      const ending = status === 'completed' ? 'home' : status === 'killed' || status === 'stopped' || code >= 128 ? 'landed' : 'lost'
+      if (id) await settle($, s => s.taskId === id, ending)
     }
     return next(e)
   })
@@ -415,7 +418,8 @@ export const register: Register = on => {
       )
     }
 
-    const glyph = (s: Sprite) => (s.status === 'running' ? (s.kind === 'shell' ? '🍞' : '🧹') : s.status === 'home' ? '📦' : '☂')
+    const glyph = (s: Sprite) =>
+      s.status === 'running' ? (s.kind === 'shell' ? '🍞' : '🧹') : s.status === 'home' ? '📦' : s.status === 'landed' ? '🏠' : '☂'
     const room = Math.max(1, (e.viewport?.rows ?? 24) - 4)
     return (
       <Box flexDirection="column">
