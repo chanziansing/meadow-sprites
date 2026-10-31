@@ -2,11 +2,11 @@ import type { Sprite, SpriteStatus } from '../types'
 import { delivered, gull, HALO, kiki, jiji, landed, loaf, rainCloud } from './characters'
 import { CREAM, EASE_OUT, FONT, KIKI_RED, LAMP, MUTED, ROOFS, esc, hash, lookStyle, scatter } from './palette'
 import type { Look } from './palette'
-import { bakery, clockTower, house, moon, nightSky, sea, stars } from './scenery'
+import { bakery, byDay, clockTower, hills, house, moon, nightSky, shore, stars } from './scenery'
 
 // Koriko, the seaside town of Kiki's Delivery Service, by night on Claude's dark
 // theme and by day on the light one (see lookStyle): a starry sky, terracotta roofs with lit windows, the clock
-// tower, a dark sea, and Kiki on her broom with Jiji, carrying parcels. Each
+// tower, a dark sea (green land and hills by day), and Kiki on her broom with Jiji, carrying parcels. Each
 // subagent or background task is one delivery to one house along her route.
 
 export const BAND_H = 44
@@ -91,8 +91,8 @@ export function bandSvg(w: number, list: Sprite[], look: Look = 'dark') {
       <rect width="${w}" height="${h}" fill="url(#ksky)"/>
       ${stars(w, h, Math.min(40, Math.floor(w / 18)), 3)}
       ${moon(Math.round(w * 0.62), 8, 4.5)}
-      ${skyline}${houses}${bakery(2, seaTop)}
-      ${sea(w, seaTop, 8)}
+      ${byDay(hills(w, seaTop, 16))}${skyline}${houses}${bakery(2, seaTop)}
+      ${shore(w, seaTop, 8)}
       <path d="M${start - 6} ${routeY} H${end}" stroke="#fff" stroke-width="1" stroke-dasharray="2 4" opacity="0.28" class="k-route"/>
       ${rider}${burst}
     </g>
@@ -145,9 +145,9 @@ export function headerSvg(w: number, list: Sprite[], look: Look = 'dark') {
       <rect width="${w}" height="${h}" fill="url(#hsky)"/>
       ${stars(w, h, Math.min(50, Math.floor(w / 9)), 9)}
       ${moon(w - 26, 18, 8)}
-      ${town}
+      ${byDay(hills(w, seaTop, 30))}${town}
       ${clockTower(towerX, seaTop, 46)}
-      ${sea(w, seaTop, 14)}
+      ${shore(w, seaTop, 14)}
       <g transform="translate(${towerX - 22} ${seaTop - 3})">${jiji(1.1, { asleep: running.length === 0 })}</g>
       ${flyer}
       <text x="16" y="24" font-family="${FONT}" font-size="15" font-weight="700" fill="${CREAM}" class="k-title">Kiki's Delivery Service</text>

@@ -42,7 +42,8 @@ export type Look = 'auto' | 'light' | 'dark'
 export const LOOKS: readonly Look[] = ['auto', 'light', 'dark']
 
 // Koriko by day, laid over the night colours by class: a pale sky, the sun where
-// the moon was, cream walls, a bright sea. The stars stay as golden glints.
+// the moon was, cream walls, and green land and a cobbled road where the sea was (`k-day` drawings show,
+// `k-night` ones hide). The stars stay as golden glints.
 const DAY: Record<string, string> = {
   'k-sky0': 'stop-color:#9fd3f0',
   'k-sky1': 'stop-color:#cfe9f7',
@@ -77,6 +78,11 @@ const DAY: Record<string, string> = {
   'k-track': 'fill:#efe9df;stroke:#d6ccbb',
   'k-warm': 'fill:#c23b40',
   'k-cold': 'fill:#3f5fae',
+  'k-day': 'display:inline',
+  'k-night': 'display:none',
+  'k-wk0': 'stop-color:#f3dcb4',
+  'k-wk1': 'stop-color:#c99560',
+  'k-wkdot': 'fill:#fff4e2',
 }
 const DAY_CSS = Object.entries(DAY)
   .map(([k, v]) => `.${k}{${v}}`)

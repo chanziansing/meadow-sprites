@@ -88,5 +88,35 @@ export function sea(w: number, top: number, h: number) {
     <path d="M0 ${top} H${w}" stroke="#2f5578" class="k-shore" stroke-width="0.8"/>`
 }
 
+/** Koriko's land by day, where the sea is at night: grass, a cobbled road and flowers along it. */
+export function land(w: number, top: number, h: number) {
+  let tufts = ''
+  for (let x = 4, i = 0; x < w; x += 9 + (i % 3) * 3, i++) {
+    tufts += `<path d="M${x} ${top + 1} l1 -2 l1 2 l1 -1.6 l1 1.6" stroke="#5e9e4a" stroke-width="0.6" fill="none"/>`
+    if (i % 4 === 1) tufts += `<circle cx="${x + 5}" cy="${top + 1.6}" r="0.8" fill="${i % 8 === 1 ? '#f5a3b8' : '#ffd56b'}"/>`
+  }
+  const road = top + h * 0.55
+  let cobbles = ''
+  for (let x = 2, i = 0; x < w; x += 6, i++) cobbles += `<rect x="${x + (i % 2) * 2}" y="${road - 0.9}" width="3" height="1.8" rx="0.8" fill="#f6e4c2" opacity="0.8"/>`
+  return `<defs><linearGradient id="landg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8d98a"/><stop offset="1" stop-color="#78b65e"/></linearGradient></defs>
+    <rect x="0" y="${top}" width="${w}" height="${h}" fill="url(#landg)"/>
+    <rect x="0" y="${road - 1.6}" width="${w}" height="3.2" fill="#dcc08f"/>${cobbles}${tufts}
+    <path d="M0 ${top} H${w}" stroke="#6aa955" stroke-width="0.8"/>`
+}
+
+/** Rolling green hills behind the town, by day. */
+export function hills(w: number, base: number, rise: number) {
+  const far = `M0 ${base} C ${w * 0.15} ${base - rise}, ${w * 0.3} ${base - rise * 0.5}, ${w * 0.45} ${base - rise * 0.8} C ${w * 0.6} ${base - rise * 1.1}, ${w * 0.8} ${base - rise * 0.4}, ${w} ${base - rise * 0.9} V${base} Z`
+  const near = `M0 ${base} C ${w * 0.2} ${base - rise * 0.5}, ${w * 0.35} ${base - rise * 0.2}, ${w * 0.55} ${base - rise * 0.55} C ${w * 0.75} ${base - rise * 0.8}, ${w * 0.9} ${base - rise * 0.3}, ${w} ${base - rise * 0.45} V${base} Z`
+  return `<path d="${far}" fill="#cfe8b8"/><path d="${near}" fill="#b4dc98"/>`
+}
+
+/** The shore under the town: the sea by night, land by day. */
+export const shore = (w: number, top: number, h: number) =>
+  `<g class="k-night">${sea(w, top, h)}</g><g class="k-day" display="none">${land(w, top, h)}</g>`
+
+/** Something only drawn by day. */
+export const byDay = (svg: string) => `<g class="k-day" display="none">${svg}</g>`
+
 export const nightSky = (id: string) =>
   `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#151827" class="k-sky0"/><stop offset="0.7" stop-color="#262a42" class="k-sky1"/><stop offset="1" stop-color="#3a3352" class="k-sky2"/></linearGradient>`
