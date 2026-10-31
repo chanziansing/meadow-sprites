@@ -149,13 +149,19 @@ export function jijiProfile(s: number, pose: 'walk' | 'point' | 'stand', coat: C
       })
       .join('')
 
+  const soft = 'calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"'
+  // Walking, his back bobs with each step; standing, he just breathes.
   const bob = walk
     ? `<animateTransform attributeName="transform" type="translate" values="${Array.from({ length: FRAMES + 1 }, (_, i) => `0 ${r2(bobAt(i / FRAMES))}`).join(';')}" dur="${STEP_S}s" repeatCount="indefinite"/>`
-    : ''
+    : pose === 'stand'
+      ? `<animateTransform attributeName="transform" type="translate" values="0 0;0 -0.25;0 0" ${soft} dur="2.6s" repeatCount="indefinite"/>`
+      : ''
   const nod = walk
     ? `<animateTransform attributeName="transform" type="rotate" values="-3 -5 -1;3 -5 -1;-3 -5 -1" dur="${STEP_S}s" repeatCount="indefinite"/>`
-    : `<animateTransform attributeName="transform" type="rotate" values="-7 -5 -1;-4 -5 -1;-7 -5 -1" dur="1.2s" repeatCount="indefinite"/>`
-  const sway = `<animateTransform attributeName="transform" type="rotate" values="-6 6 0;8 6 0;-6 6 0" dur="${pose === 'point' ? 0.6 : STEP_S * 2}s" repeatCount="indefinite"/>`
+    : pose === 'stand'
+      ? `<animateTransform attributeName="transform" type="rotate" values="-2 -5 -1;3 -5 -1;-2 -5 -1" ${soft} dur="3.4s" repeatCount="indefinite"/>`
+      : `<animateTransform attributeName="transform" type="rotate" values="-7 -5 -1;-4 -5 -1;-7 -5 -1" dur="1.2s" repeatCount="indefinite"/>`
+  const sway = `<animateTransform attributeName="transform" type="rotate" values="-6 6 0;8 6 0;-6 6 0" ${soft} dur="${pose === 'point' ? 0.6 : pose === 'stand' ? 1.9 : STEP_S * 2}s" repeatCount="indefinite"/>`
 
   // Everything that makes up his outline, in one colour: `extra` fattens strokes for the rim pass.
   const shape = (c: string, extra: number) => {

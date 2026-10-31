@@ -121,11 +121,13 @@ function bar(id: string, x: number, y: number, w: number, h: number, w8: Window)
   const tone = toneOf(w8.kind, left)
   const isLow = tone === 'red'
   const [c1, c2, bloom] = FIELDS[tone]
+  // By day the week's strip is a sandy cobbled road through town rather than the sea.
+  const [k0, k1, kd] = tone === 'sea' ? [' class="k-wk0"', ' class="k-wk1"', ' class="k-wkdot"'] : ['', '', '']
   const fw = Math.max(0, (w * left) / 100)
   let tufts = ''
   // Blossoms dot the field still standing.
   for (let i = 0, px = x + 5; px < x + fw - 4; px += 11, i++) {
-    tufts += `<circle cx="${px}" cy="${y + 3 + (i % 2) * 4}" r="${i % 3 === 0 ? 1.1 : 0.8}" fill="${bloom}" opacity="0.9"/>`
+    tufts += `<circle cx="${px}" cy="${y + 3 + (i % 2) * 4}" r="${i % 3 === 0 ? 1.1 : 0.8}" fill="${bloom}" opacity="0.9"${kd}/>`
   }
   // Kiki's red bow rides the strip's edge.
   const sprout =
@@ -133,7 +135,7 @@ function bar(id: string, x: number, y: number, w: number, h: number, w8: Window)
       ? `<g transform="translate(${x + fw - 1} ${y + h / 2})"><g><animateTransform attributeName="transform" type="rotate" values="-8;8;-8" dur="2.4s" repeatCount="indefinite"/>
           <path d="M0 0 C -2 -4, -6 -4, -6 0 C -6 3, -2 2, 0 0 Z M0 0 C 2 -4, 6 -4, 6 0 C 6 3, 2 2, 0 0 Z" fill="${isLow ? '#9c2e33' : '#e0474c'}"/><circle r="1.3" fill="#b8323a"/></g></g>`
       : ''
-  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"${k0}/><stop offset="1" stop-color="${c2}"${k1}/></linearGradient>
       <clipPath id="${id}c"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}"/></clipPath></defs>
     <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="#2a2840" stroke="#433f5c" stroke-width="0.8" class="k-track"/>
     <g clip-path="url(#${id}c)"><rect x="${x}" y="${y}" width="${fw}" height="${h}" fill="url(#${id})"/>${tufts}</g>
@@ -165,13 +167,11 @@ const POINT_S = 3.6
 let lowSince: number | null = null
 
 // ---------- Lily's visits ----------
-// Every 10 to 15 minutes Lily, the white cat next door, trots in from the edge of the ribbon, plays with Jiji a
-// few times and trots off again. The next visit is planned ahead and drawn with a delayed start, so it plays on
-// time between redraws.
+// Every 10 to 15 minutes Lily, the white cat next door, trots in from the edge of the ribbon. Jiji turns to her,
+// they touch noses, she rubs her head against his, they play at pouncing, a heart floats up, and she trots off.
+// The next visit is planned ahead and drawn with a delayed start, so it plays on time between redraws.
 
-const VISIT_S = 13
-const IN_S = 3
-const OUT_S = 10
+const VISIT_S = 16
 let nextVisit: number | null = null
 
 /** Seconds until Lily's visit, negative once it has begun; a new one is planned 10 to 15 minutes out after each. */
@@ -180,35 +180,93 @@ function visitIn(now: number) {
   return (nextVisit - now) / 1000
 }
 
-const r3 = (n: number) => Math.round(n * 1000) / 1000
+/** Call Lily over now, for `/meadow lily`: she sets off a moment later. */
+export const callLily = (now: number) => {
+  nextVisit = now + 1500
+}
 
-/** SMIL timing over one visit, from [second, value] pairs. */
-const track = (pts: [number, string | number][], begin: number) =>
-  `values="${pts.map(p => p[1]).join(';')}" keyTimes="${pts.map(p => r3(p[0] / VISIT_S)).join(';')}" dur="${VISIT_S}s" begin="${r3(begin)}s"`
+const r3 = (n: number) => Math.round(n * 1000) / 1000
+const EASE = '0.42 0 0.58 1'
+
+/**
+ * SMIL timing over one visit, from [second, value, easing?] keys. Every move eases in and out unless a key names
+ * its own curve, so nothing starts or stops dead.
+ */
+const track = (pts: [number, string | number, string?][], begin: number) =>
+  `values="${pts.map(p => p[1]).join(';')}" keyTimes="${pts.map(p => r3(p[0] / VISIT_S)).join(';')}" calcMode="spline" keySplines="${pts
+    .slice(1)
+    .map(p => p[2] ?? EASE)
+    .join(';')}" dur="${VISIT_S}s" begin="${r3(begin)}s"`
+
+const fade = (pts: [number, number][], begin: number) => `<animate attributeName="opacity" ${track(pts, begin)}/>`
+const move = (pts: [number, string, string?][], begin: number) =>
+  `<animateTransform attributeName="transform" type="translate" additive="sum" ${track(pts, begin)}/>`
+/** Squash and stretch, or a lean, about the paws at `ground`. */
+const about = (type: 'scale' | 'rotate', ground: number, pts: [number, string | number][], begin: number, inner: string) =>
+  `<g transform="translate(0 ${ground})"><g><animateTransform attributeName="transform" type="${type}" ${track(pts, begin)}/><g transform="translate(0 ${-ground})">${inner}</g></g></g>`
+
+const HEART = 'M0 1.6 C -2.6 -0.2, -2.2 -2.6, 0 -1.2 C 2.2 -2.6, 2.6 -0.2, 0 1.6 Z'
 
 /** Jiji sitting, with Lily's visit queued up: `enterX` is the ribbon's edge, from where Jiji sits. */
 function jijiWithLily(begin: number, enterX: number) {
-  const stopX = 24
-  // She pounces at him three times; he hops back, and on the last one they both jump and a heart floats up.
-  const lily: [number, string][] = [[0, `${enterX} 1`], [IN_S, `${stopX} 1`]]
-  for (const t of [3.6, 5.8, 8]) lily.push([t, `${stopX} 1`], [t + 0.45, `${stopX - 7} -3`], [t + 0.9, `${stopX} 1`])
-  lily.push([OUT_S, `${stopX} 1`], [VISIT_S, `${enterX} 1`])
-  const hop: [number, string][] = [[0, '0 0']]
-  for (const t of [4.7, 6.9, 8.15]) hop.push([t, '0 0'], [t + 0.3, '0 -4'], [t + 0.6, '0 0'])
-  hop.push([VISIT_S, '0 0'])
-  const pose = (svg: string, on: number, flip = false) => {
-    const vals = [0, 0, 0, 0]
-    vals[on] = 1
-    return `<g opacity="0"><animate attributeName="opacity" calcMode="discrete" ${track([[0, vals[0]!], [IN_S, vals[1]!], [OUT_S, vals[2]!], [VISIT_S, vals[3]!]], begin)}/>${flip ? `<g transform="scale(-1 1)">${svg}</g>` : svg}</g>`
-  }
+  const JG = 6 * 1.45 // Jiji's paws
+  const LG = 6 * 1.3 // Lily's paws, in her own drawing
+  const ly = r3(JG - LG)
+  const at = (x: number, y = 0) => `${x} ${r3(ly + y)}`
+
+  // Jiji: seated until she is near, then up on his feet and turned to her.
+  const seated = `<g>${fade([[0, 1], [1.6, 1], [1.9, 0], [15, 0], [15.3, 1], [VISIT_S, 1]], begin)}${jiji(1.45)}</g>`
+  const jijiSide = about(
+    'rotate',
+    JG,
+    [[0, 0], [5.6, 0], [6, 4], [6.4, 1], [6.8, 4], [7.2, 0], [VISIT_S, 0]],
+    begin,
+    about(
+      'scale',
+      JG,
+      [[0, '1 1'], [7.95, '1 1'], [8.15, '1.1 0.85'], [8.3, '0.92 1.1'], [8.55, '1.12 0.86'], [8.75, '1 1'], [9.2, '1 1'], [9.45, '1.1 0.86'], [9.6, '0.94 1.08'], [9.85, '1.1 0.88'], [10.05, '1 1'], [VISIT_S, '1 1']],
+      begin,
+      `<g transform="scale(-1 1)">${jijiProfile(1.45, 'stand')}</g>`,
+    ),
+  )
+  const standing = `<g opacity="0">${fade([[0, 0], [1.6, 0], [1.9, 1], [15, 1], [15.3, 0], [VISIT_S, 0]], begin)}
+    <g>${move([[0, '0 0'], [3.7, '0 0'], [4.2, '1 0'], [4.6, '1 0'], [5, '0 0'], [5.4, '0 0'], [5.8, '1 0'], [6.8, '1 0'], [7.2, '0 0'], [8.15, '0 0'], [8.35, '0 -5'], [8.55, '0 0'], [9.45, '0 0'], [9.65, '3 -4'], [9.85, '4 0'], [10.6, '0 0'], [VISIT_S, '0 0']], begin)}${jijiSide}</g></g>`
+
+  // Lily: trots in and slows to a stop, boops his nose, rubs her head on his, springs at him, hops back from his
+  // answer, then turns and trots off, gathering speed.
   const walking = jijiProfile(1.3, 'walk', LILY)
-  const heart = `<g transform="translate(9 -14)" opacity="0">
-      <animate attributeName="opacity" ${track([[0, 0], [8.3, 0], [8.6, 1], [10, 0], [VISIT_S, 0]], begin)}/>
-      <animateTransform attributeName="transform" type="translate" additive="sum" ${track([[0, '0 0'], [8.3, '0 0'], [10, '0 -6'], [VISIT_S, '0 -6']], begin)}/>
-      <path d="M0 1.6 C -2.6 -0.2, -2.2 -2.6, 0 -1.2 C 2.2 -2.6, 2.6 -0.2, 0 1.6 Z" transform="scale(1.8)" fill="#ff8fa8"/></g>`
-  return `<g><animateTransform attributeName="transform" type="translate" ${track(hop, begin)}/>${jiji(1.45)}</g>
-    <g><animateTransform attributeName="transform" type="translate" ${track(lily, begin)}/>
-      ${pose(walking, 0)}${pose(jijiProfile(1.3, 'stand', LILY), 1)}${pose(walking, 2, true)}</g>${heart}`
+  const lilyPoses = `<g opacity="0">${fade([[0, 1], [3, 1], [3.3, 0], [VISIT_S, 0]], begin)}${walking}</g>
+    <g opacity="0">${fade([[0, 0], [3, 0], [3.3, 1], [12, 1], [12.25, 0], [VISIT_S, 0]], begin)}${jijiProfile(1.3, 'stand', LILY)}</g>
+    <g opacity="0">${fade([[0, 0], [12, 0], [12.25, 1], [VISIT_S, 1]], begin)}<g transform="scale(-1 1)">${walking}</g></g>`
+  const lily = `<g>${move(
+    [
+      [0, at(enterX)], [3.2, at(34), '0.25 0.6 0.4 1'], [3.6, at(34)], [4.2, at(31)], [4.6, at(31)], [5, at(34)], [5.4, at(34)], [5.8, at(31.5)],
+      [6.8, at(31.5)], [7.2, at(34)], [7.7, at(34)], [7.95, at(31, -6)], [8.2, at(30)], [9.5, at(30)], [9.75, at(33, -4)], [10, at(35)],
+      [10.6, at(34)], [12.2, at(34)], [15.2, at(enterX), '0.55 0 0.8 0.5'], [VISIT_S, at(enterX)],
+    ],
+    begin,
+  )}${about(
+    'rotate',
+    LG,
+    [[0, 0], [5.6, 0], [5.9, -8], [6.2, -3], [6.5, -8], [6.8, -3], [7.2, 0], [7.75, 0], [7.9, 6], [8.1, -5], [8.3, 0], [9.6, 0], [9.75, 5], [10, 0], [VISIT_S, 0]],
+    begin,
+    about(
+      'scale',
+      LG,
+      [[0, '1 1'], [7.4, '1 1'], [7.7, '1.1 0.86'], [7.85, '0.93 1.1'], [8.2, '1.12 0.87'], [8.4, '1 1'], [9.45, '1 1'], [9.6, '1.08 0.88'], [9.75, '0.95 1.06'], [10, '1.1 0.88'], [10.2, '1 1'], [VISIT_S, '1 1']],
+      begin,
+      lilyPoses,
+    ),
+  )}</g>`
+
+  // A little heart pops where their noses meet, and a bigger one drifts up after they play.
+  const boop = `<g transform="translate(17.5 -10)" opacity="0">${fade([[0, 0], [4.25, 0], [4.45, 1], [4.9, 1], [5.3, 0], [VISIT_S, 0]], begin)}
+    <g><animateTransform attributeName="transform" type="scale" ${track([[0, 0], [4.25, 0], [4.5, 1.2], [4.7, 1], [VISIT_S, 1]], begin)}/><path d="${HEART}" transform="scale(1.3)" fill="#ff8fa8"/></g></g>`
+  const drift = `<g transform="translate(18 -15)" opacity="0">${fade([[0, 0], [10.8, 0], [11.1, 1], [12.3, 1], [12.9, 0], [VISIT_S, 0]], begin)}
+    ${move([[0, '0 0'], [10.8, '0 0'], [11.4, '1.5 -2'], [12, '-1.2 -4'], [12.9, '1 -6'], [VISIT_S, '1 -6']], begin)}
+    <path d="${HEART}" transform="scale(1.8)" fill="#ff8fa8"/></g>`
+
+  return `${seated}${standing}${lily}${boop}${drift}`
 }
 
 /**
@@ -279,7 +337,7 @@ export function skySvg(width: number, list: Window[], v: CacheView | null, now: 
     const { svg, visit } = jijiAt(v, low, cx, now, width + 16 - cx)
     body += `<g transform="translate(${cx} ${v.mode === 'warm' ? h - 10 : h - 9})">${svg}</g>`
     // The label steps aside while Lily is over it.
-    const aside = visit === null ? '' : `<animate attributeName="opacity" ${track([[0, 1], [1.5, 0], [11.5, 0], [VISIT_S, 1]], visit)}/>`
+    const aside = visit === null ? '' : fade([[0, 1], [1, 0], [15.2, 0], [VISIT_S, 1]], visit)
     body += `<text x="${cx + 18}" y="${h / 2 + 4}" font-family="${FONT}" font-size="11" font-weight="700" fill="${v.mode === 'warm' ? '#ff8f92' : '#9fb2ee'}" class="${v.mode === 'warm' ? 'k-warm' : 'k-cold'}">${cacheLabel}${aside}</text>`
   }
 

@@ -5,7 +5,7 @@ import type { CacheFacts, Sprite, SpriteStatus, Window } from '../types'
 import { BAND_H, bandSvg, bandText, bowSvg, headerSvg, iconSvg, statusWord, whatIs } from './koriko'
 import { DUSK, KIKI_RED, LOOK_LABEL, NAVY, RAIN, ROOF, duskOf, fmtTime, hash, isLook, nextLook } from './palette'
 import type { Look } from './palette'
-import { SKY_H, cacheView, cleanWindows, skyAlt, skySvg, skyText } from './sky'
+import { SKY_H, cacheView, callLily, cleanWindows, skyAlt, skySvg, skyText } from './sky'
 import { FLIGHT, LANDED } from './words'
 
 // Kiki's Delivery Service for Claude Code. The hooks and state live here. The
@@ -87,7 +87,7 @@ export const register: Register = on => {
     const started = await next(e)
     await $.command.register({
       name: 'meadow',
-      description: "Show or hide Kiki's delivery board of subagents and background tasks (`/meadow clear` clears the finished ones, `/meadow theme auto|light|dark` picks day or night)",
+      description: "Show or hide Kiki's delivery board of subagents and background tasks (`/meadow clear` clears the finished ones, `/meadow theme auto|light|dark` picks day or night, `/meadow lily` calls Lily over)",
     })
     // Ticks the clocks of deliveries in flight; quiet when none are out.
     $.clock.every(1000, () => {
@@ -136,6 +136,11 @@ export const register: Register = on => {
       const next = isLook(arg) ? arg : nextLook(cur)
       await setLook($, next)
       return { text: next === 'auto' ? 'Koriko follows the app: day when it is light, night when it is dark.' : next === 'light' ? 'Koriko by day.' : 'Koriko by night.' }
+    }
+    if (verb === 'lily') {
+      callLily(await $.clock.now())
+      $.ui.invalidate('ui.render')
+      return { text: 'Lily is on her way to see Jiji. She only comes while the cache is warm and Jiji is at home.' }
     }
     if (verb === 'clear') {
       await update($, sprites, l => l.filter(s => s.status === 'running'))
