@@ -169,9 +169,12 @@ let lowSince: number | null = null
 // ---------- Lily's visits ----------
 // Every 10 to 15 minutes Lily, the white cat next door, trots in from the edge of the ribbon. Jiji turns to her,
 // they touch noses, she rubs her head against his, they play at pouncing, a heart floats up, and she trots off.
-// The next visit is planned ahead and drawn with a delayed start, so it plays on time between redraws.
+// The next visit is planned ahead and drawn with a delayed start, so it plays on time between redraws. She is
+// left out of the drawing until her visit is under LEAD_S away, so her walk doesn't animate unseen for minutes.
 
 const VISIT_S = 16
+/** More than the ribbon's 30-second redraw, so one redraw always lands inside it. */
+const LEAD_S = 45
 let nextVisit: number | null = null
 
 /** Seconds until Lily's visit, negative once it has begun; a new one is planned 10 to 15 minutes out after each. */
@@ -278,7 +281,7 @@ function jijiAt(v: CacheView, low: { left: number; edge: number } | null, cx: nu
   if (v.mode === 'cold') return { svg: jiji(1.45, { asleep: true }), visit: null }
   const idle = () => {
     const visit = visitIn(now)
-    return { svg: jijiWithLily(visit, enterX), visit }
+    return visit > LEAD_S ? { svg: jiji(1.45), visit: null } : { svg: jijiWithLily(visit, enterX), visit }
   }
   if (!low) {
     lowSince = null
