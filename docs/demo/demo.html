@@ -1,0 +1,104 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>meadow-sprites demo</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 900px; height: 480px; overflow: hidden; background: #262624; color: #d9d6cf;
+    font: 13.5px/1.45 'Segoe UI', system-ui, sans-serif; display: flex; }
+  .chat { flex: 1; display: flex; flex-direction: column; padding: 18px 18px 14px; gap: 12px; min-width: 0; }
+  .pane { width: 330px; border-left: 1px solid #3a3936; background: #1f1e1d; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .pane h4 { margin: 0 0 2px; font-size: 12px; color: #a29f97; font-weight: 600; letter-spacing: .02em; }
+  .letter { align-self: flex-end; max-width: 420px; background: #2b2f4a; border: 1.5px solid #e0474c; border-radius: 12px; padding: 10px 16px; }
+  .letter .top { display: flex; align-items: center; gap: 8px; color: #f2b45a; font-weight: 700; margin-bottom: 6px; }
+  .letter p { margin: 0; color: #f6ecd6; }
+  .reply { color: #c9c6be; max-width: 520px; }
+  .reply b { color: #e8e5de; }
+  .grow { flex: 1; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .label { color: #9aa6e0; font-size: 12.5px; white-space: nowrap; }
+  .btn { color: #c9c6be; font-size: 12.5px; padding: 2px 6px; border-radius: 6px; white-space: nowrap; }
+  .prompt { border: 1px solid #45433f; border-radius: 14px; background: #30302e; padding: 12px 14px; color: #8a877f; }
+  .spin { color: #e0474c; font-size: 13px; }
+  .spin span { color: #d9d6cf; }
+  .item { display: flex; align-items: center; gap: 10px; }
+  .item .t { min-width: 0; }
+  .item .n { color: #e8e5de; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
+  .item.done .n { color: #a29f97; font-weight: 400; }
+  .item .m { color: #9aa6e0; font-size: 12px; }
+  img { display: block; }
+  body.light { background: #faf9f5; color: #3d3929; }
+  body.light .pane { background: #f3f1ea; border-color: #e3dfd3; }
+  body.light .pane h4 { color: #7a766b; }
+  body.light .letter { background: #fbf3e2; }
+  body.light .letter .top { color: #c0392b; }
+  body.light .letter p { color: #3a2f28; }
+  body.light .reply { color: #4a463c; } body.light .reply b { color: #29261b; }
+  body.light .label, body.light .item .m { color: #4b5aa0; }
+  body.light .btn { color: #4a463c; }
+  body.light .prompt { background: #fff; border-color: #dedbd1; color: #8b877c; }
+  body.light .spin span { color: #3d3929; }
+  body.light .item .n { color: #29261b; } body.light .item.done .n { color: #7a766b; }
+</style>
+<body>
+  <div class="chat">
+    <div class="letter"><div class="top"><img id="bow" width="26" height="18">a letter for delivery</div>
+      <p>Look into the three café menus, build the site and draft this week's report. Run them in the background.</p></div>
+    <div class="reply">Off we go. I've sent <b>two helpers</b> and started the <b>build</b> in the background; they'll land one by one.</div>
+    <div class="grow"></div>
+    <div class="spin">✻ <span id="word">Taking off…</span></div>
+    <img id="sky" width="552" height="34">
+    <div class="row"><img id="band" width="300" height="44"><span class="label" id="bandText"></span><span class="btn">📦 deliveries</span></div>
+    <div class="prompt">Reply to Claude…</div>
+  </div>
+  <div class="pane">
+    <h4>Deliveries</h4>
+    <img id="header" width="306" height="100">
+    <div id="rows" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+<script type="module">
+  import { bandSvg, bandText, bowSvg, headerSvg, iconSvg, statusWord, whatIs } from './lib/koriko.mjs'
+  import { fmtTime } from './lib/palette.mjs'
+  import { skySvg } from './lib/sky.mjs'
+  const look = new URLSearchParams(location.search).get('look') || 'dark'
+  if (look === 'light') document.body.className = 'light'
+  const url = svg => 'data:image/svg+xml;utf8,' + encodeURIComponent(svg)
+  const t0 = Date.now()
+  const mk = (id, kind, label, type) => ({ id, taskId: id, kind, label, type, status: 'running', startedAt: t0, steps: 0, batch: 0 })
+  const tasks = [
+    mk('a', 'agent', 'Explore the café menus', 'Explore'),
+    mk('b', 'shell', 'npm run build', 'shell'),
+    mk('c', 'agent', "Draft this week's report", 'general-purpose'),
+  ]
+  // When each delivery lands, in seconds from the start.
+  const plan = [['b', 3.2, 'home'], ['a', 6.6, 'home'], ['c', 10, 'home']]
+  const words = [[0, 'Taking off…'], [1.5, 'Delivering the parcel…'], [7, 'Flying over Koriko…'], [10, 'Landing softly…']]
+  document.getElementById('bow').src = url(bowSvg)
+  const hour = 3600e3
+  document.getElementById('sky').src = url(skySvg(552, [
+    { kind: 'five_hour', percentUsed: 38, resetsAt: new Date(t0 + 2.3 * hour).toISOString() },
+    { kind: 'seven_day', percentUsed: 61, resetsAt: new Date(t0 + 77 * hour).toISOString() },
+  ], { mode: 'warm', idleMs: 4 * 60e3, cost: 0.03 }, t0, look))
+
+  const meta = (s, at) => `${whatIs(s)} · ${statusWord(s.status)} · ${fmtTime((s.endedAt ?? at) - s.startedAt)}`
+  function draw() {
+    const at = Date.now()
+    document.getElementById('band').src = url(bandSvg(300, tasks, look))
+    document.getElementById('bandText').textContent = bandText(tasks)
+    document.getElementById('header').src = url(headerSvg(306, tasks, look))
+    const order = [...tasks.filter(s => s.status === 'running'), ...tasks.filter(s => s.status !== 'running')]
+    document.getElementById('rows').innerHTML = order.map(s => `<div class="item ${s.status === 'running' ? '' : 'done'}" data-id="${s.id}">
+      <img width="44" height="44" src="${url(iconSvg(s, at, look))}"><div class="t"><div class="n">${s.label}</div><div class="m">${meta(s, at)}</div></div></div>`).join('')
+  }
+  draw()
+  for (const [id, sec, status] of plan) setTimeout(() => {
+    const s = tasks.find(x => x.id === id); s.status = status; s.endedAt = Date.now(); s.steps = 4; draw()
+  }, sec * 1000)
+  for (const [sec, w] of words) setTimeout(() => { document.getElementById('word').textContent = w }, sec * 1000)
+  // The clocks tick without redrawing the pictures, as the mod's own rows do.
+  setInterval(() => {
+    const at = Date.now()
+    for (const el of document.querySelectorAll('.item')) el.querySelector('.m').textContent = meta(tasks.find(x => x.id === el.dataset.id), at)
+  }, 1000)
+  window.ready = true
+</script>
+</body>

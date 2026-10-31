@@ -1,0 +1,21 @@
+{
+  "name": "meadow-sprites",
+  "version": "1.0.0",
+  "description": "Kiki's Delivery Service style for Claude Code: usage and prompt cache over Koriko, subagents and background tasks as deliveries Kiki flies, letter-style message bubbles, and Kiki's words on the spinner.",
+  "author": {
+    "name": "chanziansing",
+    "url": "https://github.com/chanziansing"
+  },
+  "homepage": "https://github.com/chanziansing/meadow-sprites",
+  "repository": "https://github.com/chanziansing/meadow-sprites",
+  "license": "MIT",
+  "keywords": [
+    "mod",
+    "kiki",
+    "ghibli",
+    "progress",
+    "subagents",
+    "usage"
+  ],
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,8 @@
+node_modules/
+docs/demo/lib/
+docs/demo/frames-*/
+docs/demo/package*.json
+*.log
+.DS_Store
+Thumbs.db
+.claude-plugin/types/
