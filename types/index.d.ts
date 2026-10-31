@@ -1,5 +1,5 @@
 export type SpriteKind = 'agent' | 'shell'
-export type SpriteStatus = 'running' | 'home' | 'lost'
+export type SpriteStatus = 'running' | 'home' | 'landed' | 'lost'
 
 export type Sprite = {
   id: string
